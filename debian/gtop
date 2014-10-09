@@ -1,6 +1,6 @@
 #!/bin/bash
 if [ -f /usr/share/pyshared/gtop/gtop.pyc ]; then
-  /usr/share/pyshared/gtop/gtop.pyc "$@"
+  /usr/bin/python /usr/share/pyshared/gtop/gtop.pyc "$@"
 else
-  python /usr/share/pyshared/gtop/gtop.py "$@"
+  /usr/bin/python /usr/share/pyshared/gtop/gtop.py "$@"
 fi
