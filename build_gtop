@@ -51,6 +51,8 @@ function installation {(
   local src_dir="${pwd}/gtop"
   local py_dir="usr/share/pyshared/gtop"
   mkdir -p "etc/snmp"
+  mkdir "root"
+  cp ${src_dir}/gtoprc.xml "root"
   mkdir -p "$py_dir"
   mkdir -p "usr/share/doc/gtop"
   cp ${src_dir}/README "usr/share/doc/gtop"
