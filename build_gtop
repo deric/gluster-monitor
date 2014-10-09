@@ -62,7 +62,7 @@ function installation {(
   cp "${pwd}/debian/gtop" $bin_dir
   for file in ${src_dir}/*.py; do cp "$file" "$py_dir"; done
   # skip compilation for now
-  # python -m py_compile $(ls $bin_dir/*.py)
+  python -m py_compile $(ls $py_dir/*.py)
   cd ..
 )}
 
