@@ -1,0 +1,150 @@
+#!/bin/bash
+set -o errexit -o nounset -o pipefail
+export LC_ALL=C
+function -h {
+cat <<USAGE
+ USAGE: `basename $0`
+
+ Creates debian package for gtop monitoring util
+USAGE
+}; function --help { -h ;}
+
+this="$(cd "$(dirname "$0")" && pwd -P)"
+name="gtop"
+patch=""
+version="0.1"
+
+function main {
+  pwd="$(pwd -P)"
+  while [[ $# -gt 0 ]]
+  do
+    case "$1" in                                      # Munging globals, beware
+      --version)                version="$2"    ; shift 2 ;;
+      --patch)                  patch="$2" ; shift 2 ;;
+      --use-sudo)               use_sudo=true; shift 1 ;;
+      *)                        err 'Argument error. Please see help.' ;;
+    esac
+  done
+
+  msg "building ${name} version: ${version}"
+  cleanup
+  build
+  installation
+  pkg
+  finish
+  msg "packaging finished!"
+}
+
+function cleanup {
+  rm -f *.deb
+}
+
+function build {(
+# TODO maybe compile python scripts
+msg "building..."
+)}
+
+function installation {(
+  DEBDIR="${pwd}/deb"
+  mkdir -p "${pwd}/deb"
+  cd "${pwd}/deb"
+  local src_dir="${pwd}/gtop"
+  mkdir -p "etc/snmp"
+  mkdir -p "usr/share/doc/gtop"
+  cp ${src_dir}/README "usr/share/doc/gtop"
+  cp ${src_dir}/snmpd.conf_gtop etc/snmp/snmpd_conf.example
+  local bin_dir="usr/local/bin"
+  mkdir -p "$bin_dir"
+  for file in ${src_dir}/*.py; do cp "$file" "$bin_dir"; done
+
+  cd ..
+)}
+
+function pkg {
+  cd $pwd
+  local version="${version}${patch}"
+  local opts=()
+  pkg="$name"_"$version"_"$arch".deb
+  opts=( -t deb
+         -n "$name"
+         -v "$version"
+         --description "gtop - gluster monitoring"
+         -d "python"
+         --url=""
+         --category misc
+         --vendor ""
+         --license "GPL-2+"
+         -m tomas.barton@modgen.net
+         --prefix=/
+         -s dir )
+  ( cd deb && "$gem_bin"/fpm "${opts[@]}" -p "$pwd"/"$pkg" -- . )
+}
+
+function finish {
+  echo "removing deb directory"
+  #remove build directory
+  rm -rf "$pwd/deb"
+}
+
+function get_system_info {
+  linux="$(lsb_release_tag)"            # <distro>/<version>, like ubuntu/12.10
+  arch="$(architecture)"          # In the format used to label distro packages
+  gem_bin="$(find_gem_bin)"                          # Might not be on the PATH
+  codename="$(get_codename)"
+}
+
+function lsb_release_tag {
+  if [ -f /etc/lsb-release ]; then
+    lsb_release --id --release | cut -d: -f2 | tr A-Z a-z | xargs | tr ' ' '/'
+  else
+    local version=$(awk '{print $3}' /etc/*-release | head -n1)
+    local dist=$(cat /etc/*-release |grep ^ID= | sed 's/ID=//')
+    echo "${dist}/${version}"
+  fi
+}
+
+function architecture {
+  case "$linux" in
+    ubuntu/*|debian/*) dpkg-architecture -qDEB_BUILD_ARCH ;;
+    centos/*|redhat/*) arch ;;
+    *)                 err "Not sure how to determine arch for: $linux" ;;
+  esac
+}
+
+function find_gem_bin {
+  gem env | sed -n '/^ *- EXECUTABLE DIRECTORY: */ { s/// ; p }'
+}
+
+function get_codename {
+  case "$linux" in
+    ubuntu/*|debian/*)
+      if [ -f /etc/lsb-release ]; then
+        lsb_release -c | cut -d: -f2 | tr A-Z a-z | xargs | tr ' ' '/'
+      else
+        cat /etc/*-release | grep ^VERSION= | sed 's/VERSION=//' | cut -d "(" -f2 | cut -d ")" -f1
+      fi
+    ;;
+    centos/*|redhat/*)
+      err "not implemented yet"
+    ;;
+    *)                 err "Not sure how to get_codename for: $linux" ;;
+  esac
+}
+
+function msg { out "$*" >&2 ;}
+function err { local x=$? ; msg "$*" ; return $(( $x == 0 ? 1 : $x )) ;}
+function out { printf '%s\n' "$*" ;}
+
+
+if [[ ${1:-} ]] && declare -F | cut -d' ' -f3 | fgrep -qx -- "${1:-}"
+then
+  case "$1" in
+    -h|--help|go) : ;;
+    *) get_system_info ;;
+  esac
+  "$@"
+else
+  get_system_info
+  main "$@"
+fi
+
