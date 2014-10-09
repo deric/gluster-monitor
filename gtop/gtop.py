@@ -1896,7 +1896,7 @@ if __name__ == "__main__":
 
 	whiteList = ['eth','wlan','em','ib']						# wlan for testing ONLY!
 	whiteList = r'|'.join([name + "*" for name in whiteList])
-	baseInstall = '/var/lib/glusterd'
+	baseInstall = '/etc/gluster'
 	
 	SNMPCOMMUNITY = 'gluster'
 	
