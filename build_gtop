@@ -49,14 +49,18 @@ function installation {(
   mkdir -p "${pwd}/deb"
   cd "${pwd}/deb"
   local src_dir="${pwd}/gtop"
+  local py_dir="${pwd}/usr/share/pyshared/gtop"
   mkdir -p "etc/snmp"
+  mkdir -p "$py_dir"
   mkdir -p "usr/share/doc/gtop"
   cp ${src_dir}/README "usr/share/doc/gtop"
   cp ${src_dir}/snmpd.conf_gtop etc/snmp/snmpd_conf.example
   local bin_dir="usr/local/bin"
+  cp "${pwd}/debian/gtop" $bin_dir
   mkdir -p "$bin_dir"
-  for file in ${src_dir}/*.py; do cp "$file" "$bin_dir"; done
-
+  for file in ${src_dir}/*.py; do cp "$file" "$py_dir"; done
+  # skip compilation for now
+  # python -m py_compile $(ls $bin_dir/*.py)
   cd ..
 )}
 
@@ -70,6 +74,7 @@ function pkg {
          -v "$version"
          --description "gtop - gluster monitoring"
          -d "python"
+         -d "libsnmp-python"
          --url=""
          --category misc
          --vendor ""
