@@ -74,9 +74,10 @@ function pkg {
   opts=( -t deb
          -n "$name"
          -v "$version"
-         --description "gtop - gluster monitoring"
+         --description "gtop - gluster monitoring. Note: snmpd must be install on all gluster nodes"
          -d "python"
          -d "libsnmp-python"
+         -d "snmp"
          --url=""
          --category misc
          --vendor ""
